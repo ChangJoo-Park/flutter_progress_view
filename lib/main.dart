@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:meta/meta.dart';
 
 void main() => runApp(MyApp());
 
@@ -6,11 +8,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Progress Loading Page',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Progress Loading Page'),
     );
   }
 }
@@ -24,12 +26,46 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  bool _loading = false;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
+  @override
+  void initState() {
+    _simulateHeavyWork();
+    super.initState();
+  }
+
+  void _simulateHeavyWork() {
+    setState(() => _loading = true);
+    final Duration timeout = Duration(seconds: 2);
+    Timer(timeout, () => setState(() => _loading = false));
+  }
+
+  Widget progressView({
+    @required bool asyncLoaded,
+    @required Widget child,
+  }) {
+    Container loadingContainer = Container(
+      color: Colors.black12,
+      child: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+    return asyncLoaded ? loadingContainer : child;
+  }
+
+  Widget _buildBody() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          _loading ? Text("불러오는 중") : Text("불러오기 완료"),
+          RaisedButton(
+            child: Text("무거운 작업 시작"),
+            onPressed: () => _simulateHeavyWork(),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -38,24 +74,11 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
+      body: Container(
+        child: progressView(
+          asyncLoaded: _loading,
+          child: _buildBody(),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
       ),
     );
   }
